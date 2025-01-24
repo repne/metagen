@@ -43,7 +43,7 @@ namespace Metagen.Source
             return 0;
         }
 
-        public void Foo(int bar)
+        public void Foo(int lol)
         {
         }
     }

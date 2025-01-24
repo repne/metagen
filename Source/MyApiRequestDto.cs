@@ -38,7 +38,7 @@ public record MyApiRequestDto(string Id)
             TypeDeclarationSyntax typeDeclarationSyntax,
             string name)
             => typeDeclarationSyntax
-                .WithIdentifier(SyntaxFactory.Identifier($"{name}Request"));
+                .WithIdentifier($"{name}Request");
 
         static TypeDeclarationSyntax MyApiRequestDto(
             TypeDeclarationSyntax typeDeclarationSyntax,
@@ -86,12 +86,11 @@ public record MyApiRequestDto(string Id)
                                 SyntaxKind.StringLiteralExpression,
                                 SyntaxFactory.Literal(name)
                             ),
-                            value: SyntaxFactory.InvocationExpression(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    SyntaxFactory.IdentifierName(name),
-                                    SyntaxFactory.IdentifierName("ToString")))
-                        )
+                            value: (object field) => field.ToString()!,
+                            new()
+                            {
+                                ["field"] = name
+                            })
                 );
         }
 

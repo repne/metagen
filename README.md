@@ -300,12 +300,11 @@ static MethodDeclarationSyntax ToFormUrlEncodedContent(
                         SyntaxKind.StringLiteralExpression,
                         SyntaxFactory.Literal(name)
                     ),
-                    value: SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            SyntaxFactory.IdentifierName(name),
-                            SyntaxFactory.IdentifierName("ToString")))
-                )
+                    value: (object field) => field.ToString()!,
+                    new()
+                    {
+                        ["field"] = name
+                    })
         );
 }
 ```

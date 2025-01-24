@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Mutagen.Helpers;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -9,9 +10,14 @@ namespace Metagen.Helpers;
 
 internal static class SyntaxExensions
 {
+    public static TypeDeclarationSyntax WithIdentifier(
+        this TypeDeclarationSyntax syntaxNode,
+        string text)
+        => syntaxNode.WithIdentifier(Identifier(text));
+
     public static IEnumerable<T> DescendantNodes<T>(
         this SyntaxNode syntaxNode)
-        where T: SyntaxNode
+        where T : SyntaxNode
         => syntaxNode
             .DescendantNodes()
             .OfType<T>();
@@ -67,14 +73,18 @@ internal static class SyntaxExensions
             .OfType<ReturnStatementSyntax>()
             .FirstOrDefault()
             ?? throw new InvalidOperationException();
-        
+
         var returnStatementExpression = returnStatement.Expression
             ?? throw new InvalidOperationException();
 
-        var returnValueExpression = CreateBinaryExpression(
-            expression,
-            left: returnStatementExpression,
-            right: right);
+        var returnValueExpression = expression
+            .ToExpressionSyntax(
+                replacements: new()
+                {
+                    ["left"] = returnStatementExpression.ToString(),
+                    ["right"] = right.ToString()
+                }
+            );
 
         return methodDeclarationSyntax
             .WithBody(
@@ -83,41 +93,6 @@ internal static class SyntaxExensions
                     returnStatement,
                     returnStatement
                         .WithExpression(returnValueExpression)));
-    }
-
-    private static ExpressionSyntax CreateBinaryExpression<T>(
-        Expression<Func<T, T, T>> expression,
-        ExpressionSyntax left,
-        ExpressionSyntax right)
-    {
-        var body = (expression as LambdaExpression).Body.ToString();
-        var tree = CSharpSyntaxTree.ParseText(body);
-        var node = tree
-            .GetRoot()
-            .DescendantNodes()
-            .OfType<ExpressionStatementSyntax>()
-            .Single()
-            .Expression;
-
-        var leftNode = node
-            .DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Where(x => x.Identifier.ValueText == "left")
-            .Single();
-
-        node =  node
-            .ReplaceNode(leftNode, left);
-        
-        var rightNode = node
-            .DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Where(x => x.Identifier.ValueText == "right")
-            .Single();
-        
-        node =  node
-            .ReplaceNode(rightNode, right);
-        
-        return node;
     }
 
     public static InitializerExpressionSyntax AddInitializer(
@@ -140,9 +115,25 @@ internal static class SyntaxExensions
         ExpressionSyntax key,
         ExpressionSyntax value)
         => initializerExpressionSyntax
-            .AddExpressions(DictionaryInitializer(key, value));
+            .AddExpressions(
+                DictionaryInitializer(key, value)
+            );
 
-    private static AssignmentExpressionSyntax DictionaryInitializer(ExpressionSyntax key, ExpressionSyntax value)
+    public static InitializerExpressionSyntax AddInitializer<TInput, TOutput>(
+        this InitializerExpressionSyntax initializerExpressionSyntax,
+        ExpressionSyntax key,
+        Expression<Func<TInput, TOutput>> value,
+        Dictionary<string, string> replacements)
+            => initializerExpressionSyntax
+                .AddExpressions(
+                    DictionaryInitializer(
+                        key,
+                        value.ToExpressionSyntax(replacements))
+                );
+
+    private static AssignmentExpressionSyntax DictionaryInitializer(
+        ExpressionSyntax key,
+        ExpressionSyntax value)
         => AssignmentExpression(
             SyntaxKind.SimpleAssignmentExpression,
             ImplicitElementAccess(
