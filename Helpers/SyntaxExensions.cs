@@ -17,6 +17,13 @@ internal static class SyntaxExensions
             .OfType<T>();
 
     public static T DescendantNode<T>(
+        this SyntaxNode syntaxNode)
+        where T : SyntaxNode
+        => syntaxNode
+            .DescendantNodes<T>()
+            .Single();
+
+    public static T DescendantNode<T>(
         this SyntaxNode syntaxNode,
         Func<T, bool> predicate)
         where T : SyntaxNode
@@ -118,27 +125,30 @@ internal static class SyntaxExensions
         string key,
         string value)
         => initializerExpressionSyntax
+            .AddInitializer(
+                key: LiteralExpression(
+                    SyntaxKind.StringLiteralExpression,
+                    Literal(key)
+                ),
+                value: LiteralExpression(
+                    SyntaxKind.StringLiteralExpression,
+                    Literal(value)
+                ));
+
+    public static InitializerExpressionSyntax AddInitializer(
+        this InitializerExpressionSyntax initializerExpressionSyntax,
+        ExpressionSyntax key,
+        ExpressionSyntax value)
+        => initializerExpressionSyntax
             .AddExpressions(DictionaryInitializer(key, value));
 
-    private static AssignmentExpressionSyntax DictionaryInitializer(string key, string value)
+    private static AssignmentExpressionSyntax DictionaryInitializer(ExpressionSyntax key, ExpressionSyntax value)
         => AssignmentExpression(
             SyntaxKind.SimpleAssignmentExpression,
             ImplicitElementAccess(
-                BracketedArgumentList(
-                    [
-                        Argument(
-                            LiteralExpression(
-                                SyntaxKind.StringLiteralExpression,
-                                Literal(key)
-                            )
-                        )
-                    ]
-                )
+                BracketedArgumentList([Argument(key)])
             ),
-            LiteralExpression(
-                SyntaxKind.StringLiteralExpression,
-                Literal(value)
-            )
+            value
         );
 }
 

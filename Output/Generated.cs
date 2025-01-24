@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Metagen.Source
 {
-    public record ProductRequestInput(Int32 Bla, Int32 Bar)
+    public record ProductRequest(string Id, String Name, Int32 Price)
     {
         public int SumTwoNumbers()
         {
@@ -17,31 +17,11 @@ namespace Metagen.Source
         public Dictionary<string, object?> ToDictionary()
             => new()
             {
+                ["Name"] = Name,
+                ["Price"] = Price
             };
 
         public void Foo(int bar)
-        {
-        }
-    }
-}
-
-namespace Metagen.Source
-{
-    public record AccountRequestInput()
-    {
-        public int SumTwoNumbers()
-        {
-            return (((0 + 42) + 7) + 21);
-        }
-
-        public Dictionary<string, object?> ToDictionary()
-            => new()
-            {
-                ["Bla"] = "Bla",
-                ["Foo"] = "Bar"
-            };
-
-        public void Foo(int lol)
         {
         }
     }

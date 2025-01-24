@@ -1,36 +1,40 @@
 ﻿using Metagen.Source;
 
+List<(string Name, string Endpoint, List<(Type Type, string Name)> Parameters)> endpoints = [
+    (
+        Name: "Product",
+        Endpoint: "/products",
+        Parameters: [
+            (typeof(string), "Name"),
+            (typeof(int), "Price")
+        ]
+    )
+];
+
 var document = new Compilation();
 
-document.Start(typeof(RequestInput));
+foreach (var (Name, Endpoint, Parameters) in endpoints)
+{
+    document.StartType(typeof(MyApiRequestDto));
 
-document = document.Broadcast("Product");
-document = document.Broadcast([typeof(int), "Bla"]);
-document = document.Broadcast([typeof(int), "Bar"]);
+    document.Broadcast(Name);
 
-document.Complete();
+    foreach (var parameter in Parameters)
+    {
+        document.Broadcast(parameter.Type, parameter.Name);
+    }
 
-document.Start(typeof(RequestInput));
-
-document = document.Broadcast("Account");
-
-document = document.Broadcast([42]);
-document = document.Broadcast([7]);
-document = document.Broadcast([21]);
-
-document = document.Broadcast(["Bla", "Bla"]);
-document = document.Broadcast(["Foo", "Bar"]);
-
-document.Complete();
+    document.CompleteType();
+}
 
 WriteResult(
     filename: "Output/Generated.cs",
     lines: document
         .ToFullStrings());
 
-await Task
-    .Delay(-1)
-    .ConfigureAwait(false);
+// await Task
+//     .Delay(-1)
+//     .ConfigureAwait(false);
 
 static void WriteResult(string filename, IEnumerable<string> lines)
 {

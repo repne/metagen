@@ -7,26 +7,23 @@ using Microsoft.CodeAnalysis.Formatting;
 
 internal sealed record Compilation
 {
-    private Stack<TypeBuilder> TypeBuilders { get; init; } = [];
+    private Stack<TypeBuilder> TypeBuilders { get; set; } = [];
     private List<TypeBuilder> CompletedTypeBuilders { get; init; } = [];
 
-    public void Start(Type subjectType)
+    public void StartType(Type subjectType)
         => TypeBuilders.Push(TypeBuilder.Create(subjectType));
 
-    public void Complete()
+    public void CompleteType()
         => CompletedTypeBuilders.Add(TypeBuilders.Pop());
 
     public long Pending
         => TypeBuilders.Count;
 
-    public Compilation Broadcast(params object?[] args)
-        => this with
-        {
-            TypeBuilders = new(
-                TypeBuilders.Select(typeBuilder => typeBuilder.Build(args))
-            )
-        };
-    
+    public void Broadcast(params object?[] args)
+        => TypeBuilders = new(
+            TypeBuilders.Select(typeBuilder => typeBuilder.Build(args))
+        );
+
     public IEnumerable<string> ToFullStrings()
     {
         using var workspace = new AdhocWorkspace();
