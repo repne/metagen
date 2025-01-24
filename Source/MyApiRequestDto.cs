@@ -9,15 +9,24 @@ namespace Metagen.Source;
 
 public record MyApiRequestDto(string Id)
 {
-    public int SumTwoNumbers()
-    {
-        return 0;
-    }
+    public Uri Endpoint { get; } = new("");
 
     public Dictionary<string, object?> ToDictionary()
         => new()
         {
         };
+
+    public FormUrlEncodedContent ToFormUrlEncodedContent()
+        => new(
+            new Dictionary<string, string>
+            {
+            }
+        );
+
+    public int SumTwoNumbers()
+    {
+        return 0;
+    }
 
     public void Foo(int bar)
     {
@@ -37,10 +46,10 @@ public record MyApiRequestDto(string Id)
             string name)
             => typeDeclarationSyntax
                 .AddParameter(type.Name, name);
-        
+
         static MethodDeclarationSyntax ToDictionary(
             MethodDeclarationSyntax methodDeclarationSyntax,
-            Type _, 
+            Type _,
             string name)
         {
             var initializerExpressionSyntax = methodDeclarationSyntax
@@ -56,6 +65,32 @@ public record MyApiRequestDto(string Id)
                                 SyntaxFactory.Literal(name)
                             ),
                             value: SyntaxFactory.IdentifierName(name)
+                        )
+                );
+        }
+
+        static MethodDeclarationSyntax ToFormUrlEncodedContent(
+            MethodDeclarationSyntax methodDeclarationSyntax,
+            Type _,
+            string name)
+        {
+            var initializerExpressionSyntax = methodDeclarationSyntax
+                .DescendantNode<InitializerExpressionSyntax>();
+
+            return methodDeclarationSyntax
+                .ReplaceNode(
+                    initializerExpressionSyntax,
+                    initializerExpressionSyntax
+                        .AddInitializer(
+                            key: SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal(name)
+                            ),
+                            value: SyntaxFactory.InvocationExpression(
+                                SyntaxFactory.MemberAccessExpression(
+                                    SyntaxKind.SimpleMemberAccessExpression,
+                                    SyntaxFactory.IdentifierName(name),
+                                    SyntaxFactory.IdentifierName("ToString")))
                         )
                 );
         }

@@ -13,6 +13,8 @@ List<(string Name, string Endpoint, List<(Type Type, string Name)> Parameters)> 
 
 var document = new Compilation();
 
+document.StartType(typeof(MyApiClient));
+
 foreach (var (Name, Endpoint, Parameters) in endpoints)
 {
     document.StartType(typeof(MyApiRequestDto));
@@ -26,6 +28,8 @@ foreach (var (Name, Endpoint, Parameters) in endpoints)
 
     document.CompleteType();
 }
+
+document.CompleteType();
 
 WriteResult(
     filename: "Output/Generated.cs",
